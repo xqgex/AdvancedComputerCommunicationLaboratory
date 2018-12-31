@@ -1,13 +1,50 @@
-/*
-* Author: Tom Mahler
-* Date: May 2015
-*/
 #ifndef L2_ARP_H_
 #define L2_ARP_H_
 #include "L2.h"
+#include "NIC.h"
+#include <iomanip>
+#include <iostream>
+#include <map>
+#include <sstream>
+#include <string>
+#include <WinSock2.h>
 
+#define ARP			0x0806
+#define ARP_PKT_LEN_BYTE	28
+#define DEF_MAC_ADDR		"ff:ff:ff:ff:ff:ff"
+#define ENTRY_LIFETIME		100
+#define IP_LENGTH		4
+#define IP_VERSION		0x800
+#define IP_VERSION_4		0x0800
+#define MAC_LENGTH		6
+
+void strMac2ByteMac(string strMac, byte* byteMac);
+string byteMac2StrMac(byte* data);
+void printArp(ArpPacket arpPacket);
 
 class NIC;
+
+typedef struct ArpPacket {
+	uint16_t hardwareAddrSpace;
+	uint16_t protocolAddrSpace;
+	uint8_t hardwareAddrLen;
+	uint8_t protocolAddrLen;
+	uint16_t opCode;
+	uint8_t srcHardwareAddr[6];
+	uint32_t srcProtocolAddr;
+	uint8_t dstHardwareAddr[6];
+	uint32_t dstProtocolAddr;
+} ArpPacket;
+typedef struct PacketData {
+	byte* data;
+	uint64_t len;
+	string ip;
+} PacketData;
+typedef struct CacheEntry {
+	string macAddr;
+	bool isValid;
+	uint64_t time;
+} CacheEntry;
 
 /**
 * \class L2_ARP
@@ -20,9 +57,8 @@ class NIC;
 * arp_tha and arp_tpa in that order, according to the lengths
 * specified. Field names used correspond to RFC 826.
 */
-class L2_ARP{
+class L2_ARP {
 public:
-
 	/**
 	* \brief Constructs an ARP interface.
 	*
@@ -114,7 +150,7 @@ public:
 	* \param recvDataLen \a (size_t) The length of the data to be sent.
 	* \retval int the number of bytes that were received.
 	*/
-	int in_arpinput(byte *recvData, size_t recvDataLen);
+	int in_arpinput(byte* recvData, size_t recvDataLen);
 
 	/**
 	* \brief Send an ARP Reply.
@@ -135,10 +171,9 @@ public:
 
 private:
 	bool debug;
-	NIC * nic;
-
-	/* ADD YOUR ARP TABLE AND ADDITIONAL VARIABLES HERE */
+	NIC* nic;
+	map<string, PacketData> queue;
+	map<string, CacheEntry> cache;
 };
-
 
 #endif /* L2_ARP_H_ */

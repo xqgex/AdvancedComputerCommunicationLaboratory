@@ -1,13 +1,17 @@
-/*
-* Author: Tom Mahler
-* Date: May 2015
-*/
 #ifndef L2_H_
 #define L2_H_
+#include "NIC.h"
 #include "Types.h"
+#include "L2_ARP.h"
+#include "L3.h"
 #include <pthread.h>
 #include <string>
 
+#define ETH_HEADER_LEN		14
+#define GET_LSB			0xFF
+#define MIN_FRAME_LEN		46
+
+void l2_print_packet(byte* recvData, byte* buffer, int frameLen);
 
 class L3;
 class NIC;
@@ -16,9 +20,8 @@ class NIC;
 * \class L2
 * \brief Represents a Layer 2 interface (Ethernet).
 */
-class L2{
+class L2 {
 public:
-
 	/**
 	* \brief Constructs an L2 interface.
 	*
@@ -114,5 +117,3 @@ private:
 };
 
 #endif /* L2_H_ */
-
-
