@@ -66,8 +66,8 @@ int L3::recvFromL3(byte *recvData, size_t recvDataLen) {
 	/* Receive data from L2 */
 	memcpy(&header, recvData, sizeof(Packet));
 	/* Switch big/small endian */
-//	header.flagsFragmentOffset = ntohs(header.flagsFragmentOffset); // TODO XXX TODO XXX TODO
-//	header.headerChecksum = ntohs(header.headerChecksum); // TODO XXX TODO XXX TODO
+	header.flagsFragmentOffset = ntohs(header.flagsFragmentOffset);
+	header.headerChecksum = ntohs(header.headerChecksum);
 	/* Validate the IP header */
 	if (l3_checkSum(&header) != 0) {
 		if (debug) {
@@ -123,7 +123,7 @@ std::string L3::getLowestInterface() { return lowerInterface->getLowestInterface
 uint16_t l3_checkSum(Packet* header) {
 	uint16_t* headerAsArray = (uint16_t*)header;
 	uint32_t checkSum = 0, i = 0;
-	for (i=0; i<sizeof(Packet)/2; ++i) { /* Sum all 16 bit words in the header  */
+	for (i = 0; i<sizeof(Packet) / 2; ++i) { /* Sum all 16 bit words in the header */
 		checkSum += headerAsArray[i];
 	}
 	while (checkSum > 0xFFFF) { /* Folds a 32-bit partial checksum into 16 bits */
@@ -159,36 +159,32 @@ void l3_print_packet(Packet header, byte* data) {
 	std::bitset<16> cout_headerChecksum(header.headerChecksum);
 	std::bitset<32> cout_sourceAddress(ntohs(header.sourceAddress));
 	std::bitset<32> cout_destinationAddress(ntohs(header.destinationAddress));
-	std::cout << "   ┃0│ │ │ ┃ │ │ │ ┃1│ │ │ ┃ │ │ │ ┃2│ │ │ ┃ │ │ │ ┃3│ │ │ ┃ │ │ │ ┃" << std::endl;
-	std::cout << " ━━╉─┴─┴─┴─╂─┴─┴─┴─╂─┴─┴─┴─┸─┴─┴─┴─╂─┴─┴─┴─┸─┴─┴─┴─┸─┴─┴─┴─┸─┴─┴─┴─┨" << std::endl;
-	std::cout << "  0┃Version┃IHL    ┃Type of Service┃Total Length                   ┃" << std::endl;
-	std::cout << "   ┃ " << cout_version << "  ┃ " << cout_ihl << "  ┃ " << cout_typeOfService << "      ┃ " << cout_totalLength << "              ┃" << std::endl;
-	std::cout << " ━━╉───────┸───────┸───────────────╂─┬─┬─┬─────────────────────────┨" << std::endl;
-	std::cout << "  4┃Identification                 ┃x│D│M│Fragment Offset          ┃" << std::endl;
-	std::cout << "   ┃ " << cout_identification << "              ┃" << cout_flagsFragmentOffset[15] << "│" << cout_flagsFragmentOffset[14] << "│" << cout_flagsFragmentOffset[13] << "│ ";
-	for (i=12; 0<=i; --i) {
+	std::cout << "   |0| | | | | | | |1| | | | | | | |2| | | | | | | |3| | | | | | | |" << std::endl;
+	std::cout << " --|-------|-------|-------|-------|-------|-------|-------|-------|" << std::endl;
+	std::cout << "  0|Version|IHL    |Type of Service|Total Length                   |" << std::endl;
+	std::cout << "   | " << cout_version << "  | " << cout_ihl << "  | " << cout_typeOfService << "      | " << cout_totalLength << "              |" << std::endl;
+	std::cout << " --|-------|-------|---------------|-|-|-|-------------------------|" << std::endl;
+	std::cout << "  4|Identification                 |x|D|M|Fragment Offset          |" << std::endl;
+	std::cout << "   | " << cout_identification << "              |" << cout_flagsFragmentOffset[15] << "|" << cout_flagsFragmentOffset[14] << "|" << cout_flagsFragmentOffset[13] << "| ";
+	for (i = 12; 0 <= i; --i) {
 		std::cout << cout_flagsFragmentOffset[i];
 	}
-	std::cout << "           ┃" << std::endl;
-	std::cout << " ━━╉───────────────┰───────────────╂─┴─┴─┴─────────────────────────┨" << std::endl;
-	std::cout << "  8┃Time to live   ┃Protocol       ┃Header Checksum                ┃" << std::endl;
-	std::cout << "   ┃ " << cout_timeToLive << "      ┃ " << cout_protocol << "      ┃ " << cout_headerChecksum << "              ┃" << std::endl;
-	std::cout << " ━━╉───────────────┸───────────────┸───────────────────────────────┨" << std::endl;
-	std::cout << " 16┃Source Address                                                 ┃" << std::endl;
-	std::cout << "   ┃ " << cout_sourceAddress << "                              ┃" << std::endl;
-	std::cout << " ━━╉───────────────────────────────────────────────────────────────┨" << std::endl;
-	std::cout << " 20┃Destination Address                                            ┃" << std::endl;
-	std::cout << "   ┃ " << cout_destinationAddress << "                              ┃" << std::endl;
-	std::cout << " ━━╉───────────────────────────────────────────────────────────────┨" << std::endl;
-	std::cout << "   ┃                             Data                              ┃" << std::endl;
-	// TODO TODO TODO
-	// TODO TODO TODO
-	for (int i = sizeof(Packet); i < ntohs(header.totalLength)+sizeof(Packet) ; i++) { // TODO TODO TODO
-		cout << data[i]; // TODO TODO TODO
-	} // TODO TODO TODO
-	// TODO TODO TODO
-	std::cout << " ..┃                                                               ┃" << std::endl;
-	std::cout << " ━━╉─┬─┬─┬─┰─┬─┬─┬─┰─┬─┬─┬─┰─┬─┬─┬─┰─┬─┬─┬─┰─┬─┬─┬─┰─┬─┬─┬─┰─┬─┬─┬─┨" << std::endl;
-	std::cout << "   ┃ │ │ │ ┃ │ │ │ ┃ │ │1│1┃1│1│1│1┃1│1│1│1┃2│2│2│2┃2│2│2│2┃2│2│3│3┃" << std::endl;
-	std::cout << "   ┃0│1│2│3┃4│5│6│7┃8│9│0│1┃2│3│4│5┃6│7│8│9┃0│1│2│3┃4│5│6│7┃8│9│0│1┃" << std::endl;
+	std::cout << "           |" << std::endl;
+	std::cout << " --|---------------|---------------|-|-|-|-------------------------|" << std::endl;
+	std::cout << "  8|Time to live   |Protocol       |Header Checksum                |" << std::endl;
+	std::cout << "   | " << cout_timeToLive << "      | " << cout_protocol << "      | " << cout_headerChecksum << "              |" << std::endl;
+	std::cout << " --|---------------|---------------|-------------------------------|" << std::endl;
+	std::cout << " 16|Source Address                                                 |" << std::endl;
+	std::cout << "   | " << cout_sourceAddress << "                              |" << std::endl;
+	std::cout << " --|---------------------------------------------------------------|" << std::endl;
+	std::cout << " 20|Destination Address                                            |" << std::endl;
+	std::cout << "   | " << cout_destinationAddress << "                              |" << std::endl;
+	std::cout << " --|---------------------------------------------------------------|" << std::endl;
+	std::cout << "   |                             Data                              |" << std::endl;
+	for (i = sizeof(Packet); i < ntohs(header.totalLength) + sizeof(Packet); ++i) {
+		cout << data[i];
+	}
+	std::cout << " --|-------|-------|-------|-------|-------|-------|-------|-------|" << std::endl;
+	std::cout << "   | | | | | | | | | | |1|1|1|1|1|1|1|1|1|1|2|2|2|2|2|2|2|2|2|2|3|3|" << std::endl;
+	std::cout << "   |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|" << std::endl;
 }
