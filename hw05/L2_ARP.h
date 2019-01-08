@@ -16,10 +16,6 @@ using namespace std;
 #define ENTRY_LIFETIME		100
 #define IP_LENGTH		4
 
-void l2_arp_print(ArpPacket pkt);
-
-class NIC;
-
 typedef struct ArpPacket_name { /* sizeof(ArpPacket) == 28 */
 	uint16_t hardwareAddrSpace;
 	uint16_t protocolAddrSpace;
@@ -41,6 +37,10 @@ typedef struct CacheLine_name {
 	bool isValid;
 	uint64_t genesis;
 } CacheLine;
+
+void l2_arp_print(ArpPacket pkt);
+
+class NIC;
 
 /**
  * \class L2_ARP

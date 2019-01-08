@@ -106,7 +106,7 @@ int L2_ARP::in_arpinput(byte* recvData, size_t recvDataLen) {
 	struct in_addr da;
 	CacheLine* newLine;
 	ArpPacket pkt;
-	PacketData* pkt;
+	PacketData* queuePkt;
 	/* Validate packet length */
 	if (recvDataLen < sizeof(ArpPacket)) {
 		if (debug) {
@@ -134,15 +134,15 @@ int L2_ARP::in_arpinput(byte* recvData, size_t recvDataLen) {
 	newLine->genesis = time(NULL);
 	pkt.opCode = ntohs(pkt.opCode);
 	if ((0 < this->pktQueue.count(dstAddr)) && (pkt.opCode != 2)) {
-		pkt = &this->pktQueue[dstAddr];
+		queuePkt = &this->pktQueue[dstAddr];
 		if (debug) {
 			pthread_mutex_lock(&NIC::print_mutex);
 			std::cout << "[L2 ARP] [INFO] Packet Sent" << std::endl;
 			pthread_mutex_unlock(&NIC::print_mutex);
 		}
-		nic->getUpperInterface()->sendToL2(pkt->data, pkt->dataLen, AF_INET, newLine->MACAddress, 0, dstAddr);
+		nic->getUpperInterface()->sendToL2(queuePkt->data, queuePkt->dataLen, AF_INET, newLine->MACAddress, 0, dstAddr);
 		/* Remove the packet from the queue */
-		delete[] pkt->data;
+		delete[] queuePkt->data;
 		this->pktQueue.erase(dstAddr);
 		return recvDataLen;
 	}
